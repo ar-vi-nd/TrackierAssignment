@@ -24,19 +24,17 @@ const deleteProject = asyncHandler(async(req,res)=>{
 
     const { id } = req.params;
 
-    const project = await Project.findOne({ _id: id, projectUser: req.user._id });
+    const project = await Project.findOneAndDelete({ _id: id, projectUser: req.user._id });
     if (!project) {
         throw new ApiError(404, "Project not found or you are not authorized to delete this project");
     }
-
-    await project.remove();
     res.status(200).json(new ApiResponse(200,project, "Project deleted successfully"));
 
 
 })
 const updateProject = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { projectName, projectDescription, taskList } = req.body;
+    const { projectName, projectDescription } = req.body;
 
     const project = await Project.findOneAndUpdate(
         { _id: id, projectUser: req.user._id },

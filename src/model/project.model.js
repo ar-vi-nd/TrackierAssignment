@@ -18,7 +18,7 @@ const projectSchema = new Schema({
         {type: Schema.Types.ObjectId,
         ref : "Task"}
     ]
-})
+},{timestamps:true})
 
 const Project = mongoose.model("Project",projectSchema)
 
