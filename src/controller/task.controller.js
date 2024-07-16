@@ -8,7 +8,7 @@ import { isValidObjectId } from "mongoose";
 const addTask = asyncHandler(async(req,res)=>{
 
 
-    const { project, taskName, taskDescription, tags, dueDate } = req.body;
+    const { project, taskName, taskDescription, tags, dueDate, assignedTo } = req.body;
 
     const existingTask = await Task.findOne({taskName,assignedUser:req.user._id});
     if (existingTask) {
@@ -34,7 +34,8 @@ const addTask = asyncHandler(async(req,res)=>{
         taskDescription,
         tags,
         dueDate,
-        assignedUser:req.user._id
+        assignedUser:req.user._id,
+        assignedTo:assignedTo || req?.user?.fullName
     });
 
 
