@@ -9,8 +9,7 @@ import projectRouter from './route/project.route.js';
 import taskRouter from './route/task.route.js';
 
 app.use(cors({
-    origin : process.env.CORS_ORIGIN,
-    credentials: true
+    origin : process.env.CORS_ORIGIN
 }))
 
 
