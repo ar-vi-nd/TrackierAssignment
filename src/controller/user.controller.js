@@ -3,6 +3,7 @@ import { asyncHandler } from "../utility/asyncHandler.js";
 import { ApiError } from "../utility/ApiError.js";
 import User from "../model/user.model.js";
 
+
 const generateAccessToken = async (existingUser) => {
   try {
     const accessToken = await existingUser.generateAccessToken();

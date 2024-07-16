@@ -9,7 +9,7 @@ import projectRouter from './route/project.route.js';
 import taskRouter from './route/task.route.js';
 
 app.use(cors({
-    origin : process.env.CORS_ORIGIN
+    origin : "*"
 }))
 
 
@@ -21,6 +21,10 @@ app.use(express.static(path.resolve('./public')))
 app.use('/api/v1/users',userRouter)
 app.use('/api/v1/projects',verifyjwt,projectRouter)
 app.use('/api/v1/tasks',verifyjwt,taskRouter)
+
+app.get("/",(req,res)=>{
+    res.json({"message":"hello world"})
+})
 
 
 export {app}
