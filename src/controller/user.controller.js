@@ -26,22 +26,23 @@ const userRegister = asyncHandler(async (req, res) => {
 const userSignup = asyncHandler(async (req, res) => {
   const { fullName, email, password } = req.body;
 
-  console.log([fullName, email, password]);
+  // console.log([fullName, email, password]);
 
   if (
     [fullName, email, password].some((element) => {
       return element ? element.trim() === "" : true;
     })
   ) {
-    throw new ApiError(400, "All fields are required");
+    return res.status(400).json(new ApiError(400, "All fields are required"))
   }
 
   const existingUser = await User.findOne({ email });
 
-  console.log("existingUser : ", existingUser);
+  // console.log("existingUser : ", existingUser);
 
   if (existingUser) {
-    throw new ApiError(400, "Username or email already exists");
+    return res.status(400).json(new ApiError(400, "Username or email already exists"))
+
   }
 
   const user = await User.create({
@@ -65,17 +66,19 @@ const userLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   if (!(email && password)) {
-    throw new ApiError(400, "Credentials required");
+    return res.status(400).json(new ApiError(400, "Credentials required"))
   }
 
   const existingUser = await User.findOne({ email });
   if (!existingUser) {
-    throw new ApiError(400, "Invalid Credentials");
+    return res.status(400).json(new ApiError(400, "Credentials Invalid"))
+
   }
   const isPasswordCorrect = await existingUser.isPasswordCorrect(password);
 
   if (!isPasswordCorrect) {
-    throw new ApiError(400, "Invalid Credentials");
+    return res.status(400).json(new ApiError(400, "Invalid Credentials"))
+
   }
   const { accessToken } = await generateAccessToken(existingUser);
 
