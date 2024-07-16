@@ -2,6 +2,7 @@ import { asyncHandler } from "../utility/asyncHandler.js";
 import { ApiError } from "../utility/ApiError.js";
 import { ApiResponse } from "../utility/ApiResponse.js";
 import Project from "../model/project.model.js";
+import Task from "../model/task.model.js";
 import { isValidObjectId } from "mongoose";
 
 
