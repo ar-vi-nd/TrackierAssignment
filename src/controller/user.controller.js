@@ -38,10 +38,10 @@ const userSignup = asyncHandler(async (req, res) => {
 
   const existingUser = await User.findOne({ email });
 
-  // console.log("existingUser : ", existingUser);
+  console.log("existingUser : ", existingUser);
 
   if (existingUser) {
-    return res.status(400).json(new ApiError(400, "Username or email already exists"))
+    return res.status(400).json(new ApiError(400, "Email already exists"))
 
   }
 
