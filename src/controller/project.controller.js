@@ -2,6 +2,7 @@ import { asyncHandler } from "../utility/asyncHandler.js";
 import { ApiError } from "../utility/ApiError.js";
 import { ApiResponse } from "../utility/ApiResponse.js";
 import Project from "../model/project.model.js";
+import { isValidObjectId } from "mongoose";
 
 
 const addProject = asyncHandler(async(req,res)=>{
@@ -9,7 +10,9 @@ const addProject = asyncHandler(async(req,res)=>{
 
     const existingProject = await Project.findOne({projectName,projectUser:req.user._id});
     if (existingProject) {
-        throw new ApiError(400, "Project name already exists");
+        // throw new ApiError(400, "Project name already exists");
+       return res.status(400).json(new ApiError(400, "Project name already exists"));
+
     }
 
     const newProject = await Project.create({
@@ -23,18 +26,25 @@ const addProject = asyncHandler(async(req,res)=>{
 const deleteProject = asyncHandler(async(req,res)=>{
 
     const { id } = req.params;
+    if(!isValidObjectId(id)){
+        return res.status(400).json(new ApiError(404, "Project not found or you are not authorized to delete this project"));
+    }
 
     const project = await Project.findOneAndDelete({ _id: id, projectUser: req.user._id });
     if (!project) {
-        throw new ApiError(404, "Project not found or you are not authorized to delete this project");
+        return res.status(400).json(new ApiError(404, "Project not found or you are not authorized to delete this project"));
     }
-    res.status(200).json(new ApiResponse(200,project, "Project deleted successfully"));
-
+    return res.status(200).json(new ApiResponse(200,project, "Project deleted successfully"));
 
 })
+
 const updateProject = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { projectName, projectDescription } = req.body;
+
+    if(!isValidObjectId(id)){
+        return res.status(400).json(new ApiError(404, "Project not found or you are not authorized to update this project"));
+    }
 
     const project = await Project.findOneAndUpdate(
         { _id: id, projectUser: req.user._id },
@@ -48,26 +58,31 @@ const updateProject = asyncHandler(async (req, res) => {
     );
 
     if (!project) {
-        throw new ApiError(404, "Project not found or you are not authorized to update this project");
+        return res.status(400).json(new ApiError(404, "Project not found or you are not authorized to update this project"));
     }
 
-    res.status(200).json(new ApiResponse(200, project,"Project updated successfully"));
+    return res.status(200).json(new ApiResponse(200, project,"Project updated successfully"));
 });
 
 const getAllProjects = asyncHandler(async(req,res)=>{
     const projects = await Project.find({ projectUser: req.user._id }).populate("projectUser").populate("taskList");
-    res.status(200).json(new ApiResponse(200, "Projects retrieved successfully", projects));    
+    res.status(200).json(new ApiResponse(200, projects,"Projects retrieved successfully"));    
 })
 const getProjectById = asyncHandler(async(req,res)=>{
 
     const { id } = req.params;
 
-    const project = await Project.findOne({ _id: id, projectUser: req.user._id }).populate("projectUser").populate("taskList");
-    if (!project) {
-        throw new ApiError(404, "Project not found or you are not authorized to view this project");
+    if(!isValidObjectId(id)){
+        return res.status(400).json( new ApiError(404, "Project not found or you are not authorized to view this project"));
+
     }
 
-    res.status(200).json(new ApiResponse(200, "Project retrieved successfully", project));
+    const project = await Project.findOne({ _id: id, projectUser: req.user._id }).populate("projectUser").populate("taskList");
+    if (!project) {
+        return res.status(400).json( new ApiError(404, "Project not found or you are not authorized to view this project"));
+    }
+
+    res.status(200).json(new ApiResponse(200,  project,"Project retrieved successfully"));
 
     
 })
