@@ -1,50 +1,116 @@
-import { ApiResponse } from "../utility/ApiResponse.js"
-import { asyncHandler } from "../utility/asyncHandler.js"
-import User from "../model/user.model.js"
+import { ApiResponse } from "../utility/ApiResponse.js";
+import { asyncHandler } from "../utility/asyncHandler.js";
+import { ApiError } from "../utility/ApiError.js";
+import User from "../model/user.model.js";
 
+const generateAccessToken = async (existingUser) => {
+  try {
+    const accessToken = await existingUser.generateAccessToken();
 
-const userRegister = asyncHandler(async(req,res)=>{
-
-    return res.status(200).json(new ApiResponse(200,{},"User Registered Successfully"))
-
-})
-export const userSignup = asyncHandler(async(req,res)=>{
-
-    const {fullName,email,password} = req.body
-    
-    console.log([fullName,email,password])
-    
-    if([fullName,email,password].some(element=>{
-       return element? element.trim()==="":true})){
-        throw new ApiError(400,"All fields are required")
+    if (!accessToken) {
+      throw new ApiError("Error generating tokens");
     }
-    
-    const existingUser =await User.findOne({email})
-    
-    console.log("existingUser : ",existingUser)
-    
-    if(existingUser){
-        throw new ApiError(400,"Username or email already exists")
-    }
-    
-    const user = await User.create({
-        fullName,
-        email,
-        password,
+
+    return { accessToken };
+  } catch (error) {
+    console.log(error);
+    throw new ApiError(500, "Error generating tokens or saving tokens ");
+  }
+};
+
+const userRegister = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "User Registered Successfully"));
+});
+const userSignup = asyncHandler(async (req, res) => {
+  const { fullName, email, password } = req.body;
+
+  console.log([fullName, email, password]);
+
+  if (
+    [fullName, email, password].some((element) => {
+      return element ? element.trim() === "" : true;
     })
-    
-    const createdUser = await User.findById(user._id).select("-password")
-    
-    if(!createdUser){
-        throw new ApiError(400, "Something went wrong while creating user")
-    
-    }
-    
-    return res.status(200).json(
-        new ApiResponse(200,createdUser,"User Registered Successfully")
-    )
-    
-    
-    })
+  ) {
+    throw new ApiError(400, "All fields are required");
+  }
 
-export {userRegister}
+  const existingUser = await User.findOne({ email });
+
+  console.log("existingUser : ", existingUser);
+
+  if (existingUser) {
+    throw new ApiError(400, "Username or email already exists");
+  }
+
+  const user = await User.create({
+    fullName,
+    email,
+    password,
+  });
+
+  const createdUser = await User.findById(user._id).select("-password");
+
+  if (!createdUser) {
+    throw new ApiError(400, "Something went wrong while creating user");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, createdUser, "User Registered Successfully"));
+});
+
+const userLogin = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!(email && password)) {
+    throw new ApiError(400, "Credentials required");
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (!existingUser) {
+    throw new ApiError(400, "Invalid Credentials");
+  }
+  const isPasswordCorrect = await existingUser.isPasswordCorrect(password);
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(400, "Invalid Credentials");
+  }
+  const { accessToken } = await generateAccessToken(existingUser);
+
+  const options = {
+    httpOnly: true,
+    // if i keep secure : true I am unable to send request along with cookies in thunderclient
+    secure: false,
+    sameSite: 'lax', // Adjust if necessary
+    maxAge: 24 * 60 * 60 * 1000, // Cookie expires in 24 hours
+  };
+  existingUser.password = undefined;
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .json(new ApiResponse(200, { user: existingUser, accessToken }));
+});
+
+const userLogout = asyncHandler(async (req, res) => {
+  const user = await User.findById(req?.user?._id);
+
+  if (!user) {
+    throw new ApiError(400, "Error while logging out");
+  }
+
+  const options = {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'lax',
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .json(new ApiResponse(200, "User Logout Successfully"));
+});
+
+export { userRegister, userSignup, userLogin, userLogout };
