@@ -11,8 +11,7 @@ export const verifyjwt = asyncHandler(async (req,res,next)=>{
     // console.log(token)
 
     if(!token){
-        console.log("inside here")
-        throw new ApiError(400,"Unauthorized access")
+        return res.status(400).json(new ApiError(400, "Unauthorized Access"));
     }
 
     // console.log(token)
@@ -24,7 +23,7 @@ export const verifyjwt = asyncHandler(async (req,res,next)=>{
     const user = await User.findOne({_id : decodedToken?._id}).select("-password")
 
     if(!user){
-        throw new ApiError(400,"Invalid Access Token")
+        return res.status(400).json(new ApiError(400, "Unauthorized Access"));
     }
 
     req.user =  user
